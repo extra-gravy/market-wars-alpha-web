@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Market Wars — External Alpha</title>
+<link rel="icon" href="TemplateData/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="TemplateData/alpha.css">
+</head>
+<body>
+<header><h1>MARKET WARS</h1><span>External Alpha · 2026.09.22.5</span><button id="fullscreen" disabled>Fullscreen</button></header>
+<main id="game">
+<canvas id="unity-canvas" width="1366" height="768" tabindex="0" aria-label="Market Wars game. Use mouse and keyboard. Help and Settings are inside the game."></canvas>
+<div id="loading" class="overlay">
+<div class="loader"><h2>MARKET WARS</h2><p id="loading-text" role="status">Preparing your battlefield…</p><progress id="progress" max="1" value="0" aria-label="Game loading progress"></progress></div>
+</div>
+<div id="error" class="overlay" role="alert" hidden><div class="loader"><h2>Unable to start Market Wars</h2><p id="error-text">The browser could not initialize the game.</p><p>Try reloading in an up-to-date desktop Chrome or Edge with hardware acceleration enabled.</p><button id="reload">Reload game</button></div></div>
+</main>
+<footer>Mouse + keyboard <span>Settings and help are inside the game. Browser matches are not recorded.</span></footer>
+<noscript>Market Wars requires JavaScript, WebAssembly and WebGL 2. Enable JavaScript, then reload.</noscript>
+<script>
+"use strict";
+const canvas=document.getElementById("unity-canvas"), game=document.getElementById("game");
+const loading=document.getElementById("loading"), progress=document.getElementById("progress"), statusText=document.getElementById("loading-text");
+const full=document.getElementById("fullscreen");
+function fail(message){
+  loading.hidden=true;
+  document.getElementById("error").hidden=false;
+  document.getElementById("error-text").textContent=message;
+  full.disabled=true;
+}
+document.getElementById("reload").addEventListener("click",()=>location.reload());
+function sizeCanvas(){
+  const r=canvas.getBoundingClientRect();
+  // Preserve the proven game layout when browser chrome reduces available space.
+  // CSS scales the whole canvas; Unity input uses the same canvas rectangle.
+  const width=Math.max(1366,Math.min(1920,Math.round(r.width)));
+  const height=Math.round(width*9/16);
+  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+}
+new ResizeObserver(sizeCanvas).observe(game);
+sizeCanvas();
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+canvas.addEventListener("pointerdown",()=>canvas.focus());
+canvas.addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Home"].includes(e.key))e.preventDefault();});
+canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fail("The browser lost its graphics context. Reload to start a new match.");});
+full.addEventListener("click",async()=>{
+  try{if(document.fullscreenElement)await document.exitFullscreen();else await game.requestFullscreen();canvas.focus();}
+  catch{full.textContent="Fullscreen unavailable";}
+});
+document.addEventListener("fullscreenchange",()=>{full.textContent=document.fullscreenElement?"Exit fullscreen":"Fullscreen";sizeCanvas();});
+
+const config={
+ dataUrl:"Build/RawWeb.data.unityweb",
+ frameworkUrl:"Build/RawWeb.framework.js.unityweb",
+ codeUrl:"Build/RawWeb.wasm.unityweb",
+ streamingAssetsUrl:"StreamingAssets",
+ companyName:"Market Wars Prototype",
+ productName:"Market Wars External Alpha Web",
+ productVersion:"2026.09.22.5",
+ autoSyncPersistentDataPath:true,
+ matchWebGLToCanvasSize:false,
+ devicePixelRatio:1,
+ showBanner:(message,type)=>{if(type==="error")fail("The game could not load. "+String(message).replace(/<[^>]*>/g,""));else console.warn(message);}
+};
+if(typeof WebAssembly!=="object"||!document.createElement("canvas").getContext("webgl2")){
+ fail("This browser cannot initialize WebAssembly or WebGL 2.");
+}else{
+ const script=document.createElement("script");
+ script.src="Build/RawWeb.loader.js";
+ script.onerror=()=>fail("The game loader could not download. Check your connection and reload.");
+ script.onload=()=>createUnityInstance(canvas,config,value=>{
+   progress.value=value;statusText.textContent="Loading battlefield · "+Math.round(value*100)+"%";
+ }).then(()=>{
+   loading.hidden=true;canvas.focus();full.disabled=!document.fullscreenEnabled;
+ }).catch(error=>{console.error(error);fail("The game could not initialize. Check your connection and browser settings, then reload.");});
+ document.body.appendChild(script);
+}
+</script>
+</body>
+</html>
