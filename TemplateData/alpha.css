@@ -26,3 +26,32 @@ footer{display:flex;justify-content:space-between;padding:0 18px;align-items:cen
 ::selection{background:#a7dacb;color:#0a171f}
 [hidden]{display:none!important}
 @media(max-width:800px){header{gap:12px;padding:0 10px}header span{font-size:11px}footer span{display:none}h1{font-size:15px}}
+/* Feedback extends the game's inset panels and raised metal action plates. */
+#alpha-feedback{color:#e5edf0;background:#293940;border:1px solid #78939a;box-shadow:inset 0 0 0 3px #34464c,0 16px 40px #0009;padding:32px;width:min(640px,calc(100vw - 40px));max-height:calc(100dvh - 48px);overflow:auto}
+#alpha-feedback::backdrop{background:#08121aeF}
+#alpha-feedback h2{font-size:26px;letter-spacing:.025em;margin:0 0 16px}
+#alpha-feedback p{color:#d1e0e3;font-size:17px;line-height:1.5}
+#alpha-feedback .feedback-actions{display:flex;gap:12px;margin-top:18px}
+#alpha-feedback button{min-height:48px;font-size:15px;font-weight:700;line-height:1.25;padding:12px 20px;border:1px solid #799399;background:linear-gradient(#2d414a 0%,#172a33 48%,#0c1b23 52%,#172b33 100%);box-shadow:inset 0 0 0 2px #0d2028,inset 0 3px 0 2px #53666d,0 3px 5px #0005;border-radius:3px}
+#alpha-feedback button:hover{border-color:#c3e6df;filter:brightness(1.16)}
+#alpha-feedback button:active{background:#12262e;box-shadow:inset 0 2px 5px #0008;filter:none}
+#alpha-feedback button:focus-visible{outline:2px solid #c1f5e6;outline-offset:4px}
+#alpha-feedback .action-primary{color:#d9fff1;border-color:#a7dacc;flex:1}
+#alpha-feedback .intro-actions{flex-direction:column;margin-top:28px}
+#alpha-feedback.questionnaire{width:min(900px,calc(100vw - 40px));padding:26px 30px}
+#feedback-questions{display:flex;flex-direction:column;max-height:calc(100dvh - 104px)}
+#feedback-questions h2{margin-bottom:8px}
+#questions-description{margin:0 0 18px}
+.question-scroll{min-height:0;overflow:auto;padding:16px 18px;background:#17272f;border:1px solid #526b74;scrollbar-color:#799b9f #14242b;scrollbar-width:thin}
+.question-scroll:focus-visible{outline:2px solid #a7dacc;outline-offset:2px}
+#alpha-feedback .template-heading{font-weight:700;font-size:16px;margin:0 0 12px;color:#eef6f6}
+.template-meta{display:flex;gap:24px;flex-wrap:wrap;border-bottom:1px solid #47606a;padding-bottom:12px}
+#alpha-feedback .template-meta p{font-size:14px;margin:0;color:#b8d0d5;font-variant-numeric:tabular-nums}
+.question-list{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+#alpha-feedback .question-list p{font-size:16px;margin:0;padding:14px 0;border-bottom:1px solid #344b55;break-inside:avoid}
+#alpha-feedback #copy-status{font-size:14px;margin:14px 0 0;min-height:42px;color:#c5e7dc}
+#alpha-feedback #feedback-manual-copy{font:16px/1.5 Arial,sans-serif;color:#e5edf0;background:#17272f;border:1px solid #799b9f;width:100%;min-height:180px;height:360px;resize:none;padding:16px;scrollbar-color:#799b9f #14242b}
+#alpha-feedback.larger-text .question-list p,#alpha-feedback.larger-text #feedback-manual-copy{font-size:18px}
+#alpha-feedback.larger-text .template-meta p,#alpha-feedback.larger-text #copy-status{font-size:16px}
+@media(max-width:650px){#alpha-feedback.questionnaire{padding:20px}.question-list{grid-template-columns:1fr}.feedback-actions{flex-direction:column}.template-meta{gap:8px}#alpha-feedback h2{font-size:22px}}
+@media(max-height:700px){#alpha-feedback.questionnaire{padding:20px}#feedback-questions{max-height:calc(100dvh - 90px)}#alpha-feedback .question-list p{padding:10px 0}}

@@ -9,13 +9,50 @@
 <link rel="stylesheet" href="TemplateData/alpha.css">
 </head>
 <body>
-<header><h1>MARKET WARS</h1><span>External Alpha · 2026.09.23.7</span><button id="fullscreen" disabled>Fullscreen</button></header>
+<header><h1>MARKET WARS</h1><span>External Alpha · 2026.09.23.8</span><button id="fullscreen" disabled>Fullscreen</button></header>
 <main id="game">
 <canvas id="unity-canvas" width="1366" height="768" tabindex="0" aria-label="Market Wars game. Use mouse and keyboard. Help and Settings are inside the game."></canvas>
 <div id="loading" class="overlay">
 <div class="loader"><h2>MARKET WARS</h2><p id="loading-text" role="status">Preparing your battlefield…</p><progress id="progress" max="1" value="0" aria-label="Game loading progress"></progress></div>
 </div>
 <div id="error" class="overlay" role="alert" hidden><div class="loader"><h2>Unable to start Market Wars</h2><p id="error-text">The browser could not initialize the game.</p><p>Try reloading in an up-to-date desktop Chrome or Edge with hardware acceleration enabled.</p><button id="reload">Reload game</button></div></div>
+<dialog id="alpha-feedback" aria-labelledby="feedback-title" aria-describedby="feedback-description">
+  <section id="feedback-intro">
+    <h2 id="feedback-title">ALPHA FEEDBACK</h2>
+    <p id="feedback-description">We're testing Market Wars with a small group. After playing, we'd love your feedback. Nothing is collected automatically.</p>
+    <div class="feedback-actions intro-actions">
+      <button id="start-testing" class="action-primary" autofocus>START TESTING</button>
+      <button id="view-questions">VIEW FEEDBACK QUESTIONS</button>
+    </div>
+  </section>
+  <section id="feedback-questions" hidden>
+    <h2 id="questions-title">FEEDBACK QUESTIONS</h2>
+    <p id="questions-description">Copy the template, add your answers, then paste it into your group chat or DM.</p>
+    <div class="question-scroll" tabindex="0" aria-label="Feedback questionnaire">
+      <p class="template-heading">MARKET WARS — EXTERNAL ALPHA FEEDBACK</p>
+      <div class="template-meta"><p><strong>Build:</strong> 2026.09.23.8</p><p><strong>Browser:</strong> <span id="feedback-browser"></span></p></div>
+      <div class="question-list">
+        <p>Platform / PC or Mac specs:</p>
+        <p>How many matches did you play?</p>
+        <p>Performance / FPS:</p>
+        <p>Any crashes, freezes, bugs or strange behavior?</p>
+        <p>If something went wrong, what were you doing?</p>
+        <p>Controls / UI / readability:</p>
+        <p>Anything confusing or difficult to understand?</p>
+        <p>Balance / gameplay observations:</p>
+        <p>Most fun:</p>
+        <p>Most frustrating:</p>
+        <p>Anything else:</p>
+      </div>
+    </div>
+    <textarea id="feedback-manual-copy" readonly hidden aria-label="Complete feedback template for manual copy" spellcheck="false"></textarea>
+    <p id="copy-status" role="status" aria-live="polite">Nothing is submitted here. Share only when you're ready.</p>
+    <div class="feedback-actions">
+      <button id="copy-feedback" class="action-primary">COPY FEEDBACK TEMPLATE</button>
+      <button id="feedback-back">BACK</button>
+    </div>
+  </section>
+</dialog>
 </main>
 <footer>Mouse + keyboard <span>Settings and help are inside the game. Browser matches are not recorded.</span></footer>
 <noscript>Market Wars requires JavaScript, WebAssembly and WebGL 2. Enable JavaScript, then reload.</noscript>
@@ -25,6 +62,7 @@ const canvas=document.getElementById("unity-canvas"), game=document.getElementBy
 const loading=document.getElementById("loading"), progress=document.getElementById("progress"), statusText=document.getElementById("loading-text");
 const full=document.getElementById("fullscreen");
 function fail(message){
+  document.getElementById("alpha-feedback").close();
   loading.hidden=true;
   document.getElementById("error").hidden=false;
   document.getElementById("error-text").textContent=message;
@@ -46,10 +84,97 @@ canvas.addEventListener("pointerdown",()=>canvas.focus());
 canvas.addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Home"].includes(e.key))e.preventDefault();});
 canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fail("The browser lost its graphics context. Reload to start a new match.");});
 full.addEventListener("click",async()=>{
-  try{if(document.fullscreenElement)await document.exitFullscreen();else await game.requestFullscreen();canvas.focus();}
+  try{if(document.fullscreenElement)await document.exitFullscreen();else await game.requestFullscreen();if(!feedbackDialog.open)canvas.focus();}
   catch{full.textContent="Fullscreen unavailable";}
 });
 document.addEventListener("fullscreenchange",()=>{full.textContent=document.fullscreenElement?"Exit fullscreen":"Fullscreen";sizeCanvas();});
+
+// Copy-only questionnaire: no answer inputs, requests, or persistent feedback data.
+const feedbackDialog=document.getElementById("alpha-feedback");
+const intro=document.getElementById("feedback-intro"), questions=document.getElementById("feedback-questions");
+const copyButton=document.getElementById("copy-feedback"), copyStatus=document.getElementById("copy-status");
+const manualCopy=document.getElementById("feedback-manual-copy"), questionScroll=document.querySelector(".question-scroll");
+const introKey="MarketWars.ExternalAlphaWeb.feedbackIntroSeen";
+let feedbackReturn=null, feedbackText="", copyGeneration=0, loadStarted=false;
+function browserName(){
+  const ua=navigator.userAgent;
+  for(const [pattern,name] of [[/Edg\/([\d.]+)/,"Microsoft Edge"],[/(?:HeadlessChrome|Chrome)\/([\d.]+)/,"Chrome"],[/Firefox\/([\d.]+)/,"Firefox"],[/Version\/([\d.]+).*Safari\//,"Safari"]]){
+    const match=ua.match(pattern);if(match)return name+" "+match[1];
+  }
+  return "Not identified — please add your browser and version";
+}
+function makeFeedbackTemplate(browser){
+  return ["MARKET WARS — EXTERNAL ALPHA FEEDBACK","Build:\n"+config.productVersion,
+    "Platform / PC or Mac specs:","Browser:\n"+browser,"How many matches did you play?",
+    "Performance / FPS:","Any crashes, freezes, bugs or strange behavior?",
+    "If something went wrong, what were you doing?","Controls / UI / readability:",
+    "Anything confusing or difficult to understand?","Balance / gameplay observations:",
+    "Most fun:","Most frustrating:","Anything else:"].join("\n\n")+"\n";
+}
+function showQuestions(largerText=false){
+  const browser=browserName();feedbackText=makeFeedbackTemplate(browser);
+  document.getElementById("feedback-browser").textContent=browser;
+  feedbackDialog.classList.toggle("larger-text",largerText);
+  feedbackDialog.classList.add("questionnaire");
+  feedbackDialog.setAttribute("aria-labelledby","questions-title");
+  feedbackDialog.setAttribute("aria-describedby","questions-description");
+  intro.hidden=true;questions.hidden=false;manualCopy.hidden=true;questionScroll.hidden=false;
+  copyStatus.textContent="Nothing is submitted here. Share only when you're ready.";
+  copyButton.disabled=false;copyGeneration++;
+  if(!feedbackDialog.open)feedbackDialog.showModal();
+  questionScroll.scrollTop=0;copyButton.focus();
+}
+function showIntroduction(){
+  feedbackDialog.classList.remove("questionnaire","larger-text");
+  feedbackDialog.setAttribute("aria-labelledby","feedback-title");
+  feedbackDialog.setAttribute("aria-describedby","feedback-description");
+  intro.hidden=false;questions.hidden=true;
+  if(!feedbackDialog.open)feedbackDialog.showModal();
+  document.getElementById("start-testing").focus();
+}
+function clearFeedback(){
+  copyGeneration++;feedbackText="";manualCopy.value="";
+  document.getElementById("feedback-browser").textContent="";copyButton.disabled=false;
+}
+function backFromFeedback(){
+  clearFeedback();
+  if(feedbackReturn){
+    const restore=feedbackReturn;feedbackReturn=null;feedbackDialog.close();
+    restore();canvas.focus({preventScroll:true});
+  }else showIntroduction();
+}
+function startTesting(){
+  try{sessionStorage.setItem(introKey,"1");}catch{/* A blocked store still permits this page's session. */}
+  clearFeedback();feedbackDialog.close();startGame();
+}
+document.getElementById("start-testing").addEventListener("click",startTesting);
+document.getElementById("view-questions").addEventListener("click",()=>showQuestions());
+document.getElementById("feedback-back").addEventListener("click",backFromFeedback);
+feedbackDialog.addEventListener("cancel",event=>{
+  event.preventDefault();if(!questions.hidden)backFromFeedback();else startTesting();
+});
+// Keep DOM controls from forwarding gestures to Unity while the dialog owns focus.
+for(const type of ["keydown","keyup","pointerdown","pointerup","mousedown","mouseup","wheel"])
+  feedbackDialog.addEventListener(type,event=>event.stopPropagation());
+copyButton.addEventListener("click",async()=>{
+  if(copyButton.disabled)return;
+  const generation=copyGeneration;copyButton.disabled=true;
+  try{
+    if(!navigator.clipboard?.writeText)throw new Error("Clipboard unavailable");
+    await navigator.clipboard.writeText(feedbackText);
+    if(generation===copyGeneration)copyStatus.textContent="Copied — paste it into the group chat or DM when you're ready.";
+  }catch{
+    if(generation===copyGeneration){
+      manualCopy.value=feedbackText;manualCopy.hidden=false;questionScroll.hidden=true;
+      manualCopy.focus();manualCopy.select();
+      copyStatus.textContent="Automatic copy is unavailable. The complete template is selected — press Ctrl+C (Windows/Linux) or Command+C (Mac).";
+    }
+  }finally{if(generation===copyGeneration)copyButton.disabled=false;}
+});
+window.MarketWarsFeedback=Object.freeze({open(largerText,onClose){
+  if(feedbackDialog.open||typeof onClose!=="function")return false;
+  feedbackReturn=onClose;showQuestions(largerText);return true;
+}});
 
 const config={
  dataUrl:"Build/RawWeb.data.unityweb",
@@ -58,12 +183,14 @@ const config={
  streamingAssetsUrl:"StreamingAssets",
  companyName:"Market Wars Prototype",
  productName:"Market Wars External Alpha Web",
- productVersion:"2026.09.23.7",
+ productVersion:"2026.09.23.8",
  autoSyncPersistentDataPath:true,
  matchWebGLToCanvasSize:false,
  devicePixelRatio:1,
  showBanner:(message,type)=>{if(type==="error")fail("The game could not load. "+String(message).replace(/<[^>]*>/g,""));else console.warn(message);}
 };
+function startGame(){
+if(loadStarted)return;loadStarted=true;
 if(typeof WebAssembly!=="object"||!document.createElement("canvas").getContext("webgl2")){
  fail("This browser cannot initialize WebAssembly or WebGL 2.");
 }else{
@@ -77,6 +204,9 @@ if(typeof WebAssembly!=="object"||!document.createElement("canvas").getContext("
  }).catch(error=>{console.error(error);fail("The game could not initialize. Check your connection and browser settings, then reload.");});
  document.body.appendChild(script);
 }
+}
+let seenIntroduction=false;try{seenIntroduction=sessionStorage.getItem(introKey)==="1";}catch{}
+if(seenIntroduction)startGame();else showIntroduction();
 </script>
 </body>
 </html>
